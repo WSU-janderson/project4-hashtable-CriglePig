@@ -65,11 +65,10 @@ bool HashTable::contains(const std::string& key) const {
  * exception if the key is not found.
  */
 std::optional<int> HashTable::get(const std::string& key) const {
-    if (!contains(key)) return std::nullopt;
-
     for (size_t i = 0; i < size; i++) {
         if (table[i].getKey() == key) return table[i].getValue();
     }
+    return std::nullopt;
 }
 
 /**
