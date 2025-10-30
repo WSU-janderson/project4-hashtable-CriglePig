@@ -5,14 +5,13 @@
 #include "HashTableBucket.h"
 #include <iostream>
 #include <string>
+#include <utility>
 
 /**
 * The default constructor can simply set the bucket type to ESS.
  *
 */
 HashTableBucket::HashTableBucket() {
-    key = "";
-    value = 0;
     makeESS();
 }
 
@@ -20,18 +19,16 @@ HashTableBucket::HashTableBucket() {
 * A parameterized constructor could initialize the key and value, as
 * well as set the bucket type to NORMAL.
 */
-HashTableBucket::HashTableBucket(std::string key, size_t value) {
-    this->key = key;
-    this->value = value;
-    makeNormal();
+HashTableBucket::HashTableBucket(std::string key, int value) {
+    load(std::move(key), value);
 }
 
 /**
 * A load method could load the key-value pair into the bucket, which
 * should then also mark the bucket as NORMAL.
 */
-void HashTableBucket::load(std::string key, size_t value) {
-    this->key = key;
+void HashTableBucket::load(std::string key, int value) {
+    this->key = std::move(key);
     this->value = value;
     makeNormal();
 }
@@ -52,11 +49,15 @@ std::string HashTableBucket::getKey() const {
     return key;
 }
 
-size_t HashTableBucket::getValue() const {
+int HashTableBucket::getValue() const {
     return value;
 }
 
-void HashTableBucket::setValue(const size_t newValue) {
+int& HashTableBucket::getValueRef() {
+    return value;
+}
+
+void HashTableBucket::setValue(const int newValue) {
     value = newValue;
 }
 

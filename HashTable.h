@@ -19,9 +19,11 @@ class HashTable {
 
         bool contains(const std::string &key) const;
 
+        bool isNormalKeyFound(size_t index, const std::string& key) const;
+
         std::optional<int> get(const std::string &key) const;
 
-        int &operator[](const std::string &key);
+        int& operator[](const std::string &key);
 
         std::vector<std::string> keys() const;
 

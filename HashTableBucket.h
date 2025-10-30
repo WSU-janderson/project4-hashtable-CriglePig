@@ -14,17 +14,18 @@ class HashTableBucket {
 
     public:
         HashTableBucket();  // ESS by default
-        HashTableBucket(std::string key, size_t value);
+        HashTableBucket(std::string key, int value);
 
-        void load(std::string key, size_t value);
+        void load(std::string key, int value);
 
         void makeESS();
         void makeNormal();
         void makeEAR();
 
         std::string getKey() const;
-        size_t getValue() const;
-        void setValue(size_t newValue);
+        int getValue() const;
+        int& getValueRef();
+        void setValue(int newValue);
 
         bool isEmpty() const;
         bool isEmptySinceStart() const;

@@ -23,9 +23,9 @@ HashTable::HashTable(size_t initCapacity) : capacity(initCapacity), size(0) {
  * should return false
  */
 bool HashTable::insert(std::string key, size_t value) {
-    if (contains(key)) return false;
+    if (contains(key)) return false; // throws exception if duplicate key
 
-
+    table.emplace_back(key, value); // inserts new key-value pair
 
     size++;
     return true;
@@ -38,7 +38,11 @@ bool HashTable::insert(std::string key, size_t value) {
 bool HashTable::remove(std::string key) {
     if (!contains(key)) return false;
 
-
+    for (size_t i = 0; i < capacity; i++) {
+        if (isNormalKeyFound(i, key)) {
+            table[i].makeEAR();
+        }
+    }
 
     size--;
     return true;
@@ -49,10 +53,16 @@ bool HashTable::remove(std::string key) {
  * the table.
  */
 bool HashTable::contains(const std::string& key) const {
-    for (size_t i = 0; i < size; i++) {
-        if (table[i].getKey() == key) return true;
+    for (size_t i = 0; i < capacity; i++) {
+        if (isNormalKeyFound(i, key)) {
+            return true;
+        }
     }
     return false;
+}
+
+bool HashTable::isNormalKeyFound(const size_t index, const std::string& key) const {
+    return table[index].getKey() == key && !table[index].isEmpty();
 }
 
 /**
@@ -65,28 +75,32 @@ bool HashTable::contains(const std::string& key) const {
  * exception if the key is not found.
  */
 std::optional<int> HashTable::get(const std::string& key) const {
-    for (size_t i = 0; i < size; i++) {
-        if (table[i].getKey() == key) return table[i].getValue();
+    for (size_t i = 0; i < capacity; i++) {
+        if (isNormalKeyFound(i, key)) {
+            return table[i].getValue();
+        }
     }
     return std::nullopt;
 }
 
 /**
  * The bracket operator lets us access values in the map using a familiar syntax,
- * similar to C++ std::map or Python dictionaries. It behaves like get, returnin
- * the value associated with a given key:
- int idNum = hashTable[“James”];
- * Unlike get, however, the bracker operator returns a reference to the value,
- * which allows assignment:
- hashTable[“James”] = 1234;
- If the key is not
- * in the table, returning a valid reference is impossible. You may choose to
+ * similar to C++ std::map or Python dictionaries. It behaves like get, returning
+ * the value associated with a given key: int idNum = hashTable[“James”];
+ * Unlike get, however, the bracket operator returns a reference to the value,
+ * which allows assignment: hashTable[“James”] = 1234;
+ * If the key is not in the table, returning a valid reference is impossible. You may choose to
  * throw an exception in this case, but for our implementation, the situation
  * results in undefined behavior. Simply put, you do not need to address attempts
  * to access keys not in the table inside the bracket operator method.
  */
-int& HashTable::operator[](const std::string& key) {
-
+int& HashTable::operator[](const std::string &key) {
+    for (size_t i = 0; i < capacity; i++) {
+        if (isNormalKeyFound(i, key)) {
+            return table[i].getValueRef();
+        }
+    }
+    throw std::exception(); // throw exception if no valid key-pair found
 }
 
 /**
@@ -95,7 +109,14 @@ int& HashTable::operator[](const std::string& key) {
 * the same as the size of the hash table.
 */
 std::vector<std::string> HashTable::keys() const {
+    std::vector<std::string> keys;
 
+    for (size_t i = 0; i < capacity; i++) {
+        if (!table[i].isEmpty()) {
+            keys.push_back(table[i].getKey());
+        }
+    }
+    return keys;
 }
 
 /**
