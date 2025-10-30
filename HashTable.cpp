@@ -1,4 +1,4 @@
-/**
+/*
  * HashTable.cpp
  */
 
@@ -13,7 +13,7 @@
  * necessary. If no capacity is given, it defaults to 8 initially
  */
 HashTable::HashTable(size_t initCapacity = 8) {
-
+    capacity = initCapacity;
 }
 
 /**
@@ -23,7 +23,12 @@ HashTable::HashTable(size_t initCapacity = 8) {
  * should return false
  */
 bool HashTable::insert(std::string key, size_t value) {
+    if (contains(key)) return false;
 
+
+
+    numElements++;
+    return true;
 }
 
  /**
@@ -31,7 +36,12 @@ bool HashTable::insert(std::string key, size_t value) {
  * table. This might just be marking a bucket as empty-after-remove
  */
 bool HashTable::remove(std::string key) {
+    if (!contains(key)) return false;
 
+
+
+    numElements--;
+    return true;
 }
 
  /**
@@ -39,7 +49,10 @@ bool HashTable::remove(std::string key) {
  * the table.
  */
 bool HashTable::contains(const std::string& key) const {
-
+    for (size_t i = 0; i < size(); i++) {
+        if (table[i].getKey() == key) return true;
+    }
+    return false;
 }
 
 /**
@@ -92,15 +105,15 @@ The time complexity for
 * this method must be O(1).
 */
 double HashTable::alpha() const {
-
+    return static_cast<double>(size()) / static_cast<double>(capacity);
 }
 
 /**
 * capacity returns how many buckets in total are in the hash table. The time
 * complexity for this algorithm must be O(1).
 */
-size_t HashTable::capacity() const {
-
+size_t HashTable::getCapacity() const {
+    return capacity;
 }
 
 /**
@@ -108,5 +121,5 @@ size_t HashTable::capacity() const {
 * time complexity for this method must be O(1)
 */
 size_t HashTable::size() const {
-
+    return numElements;
 }
