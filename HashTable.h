@@ -6,12 +6,13 @@
 
 class HashTable {
     private:
-        size_t capacity;
-        size_t numElements;
+        size_t capacity; // the amount of spaces for buckets in the table
+        size_t size; // the amount of buckets in the table
         std::vector<HashTableBucket> table;
 
     public:
-        HashTable(size_t initCapacity); // default constructor
+        HashTable(size_t initCapacity = 8); // default constructor
+
         bool insert(std::string key, size_t value);
 
         bool remove(std::string key);
@@ -28,5 +29,5 @@ class HashTable {
 
         size_t getCapacity() const;
 
-        size_t size() const;
+        size_t getSize() const;
 };

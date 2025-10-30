@@ -12,8 +12,8 @@
  * Only a single constructor that takes an initial capacity for the table is
  * necessary. If no capacity is given, it defaults to 8 initially
  */
-HashTable::HashTable(size_t initCapacity = 8) {
-    capacity = initCapacity;
+HashTable::HashTable(size_t initCapacity) : capacity(initCapacity), size(0) {
+    table.resize(capacity);
 }
 
 /**
@@ -27,7 +27,7 @@ bool HashTable::insert(std::string key, size_t value) {
 
 
 
-    numElements++;
+    size++;
     return true;
 }
 
@@ -40,7 +40,7 @@ bool HashTable::remove(std::string key) {
 
 
 
-    numElements--;
+    size--;
     return true;
 }
 
@@ -49,7 +49,7 @@ bool HashTable::remove(std::string key) {
  * the table.
  */
 bool HashTable::contains(const std::string& key) const {
-    for (size_t i = 0; i < size(); i++) {
+    for (size_t i = 0; i < size; i++) {
         if (table[i].getKey() == key) return true;
     }
     return false;
@@ -65,7 +65,11 @@ bool HashTable::contains(const std::string& key) const {
  * exception if the key is not found.
  */
 std::optional<int> HashTable::get(const std::string& key) const {
+    if (!contains(key)) return std::nullopt;
 
+    for (size_t i = 0; i < size; i++) {
+        if (table[i].getKey() == key) return table[i].getValue();
+    }
 }
 
 /**
@@ -105,7 +109,7 @@ The time complexity for
 * this method must be O(1).
 */
 double HashTable::alpha() const {
-    return static_cast<double>(size()) / static_cast<double>(capacity);
+    return static_cast<double>(size) / static_cast<double>(capacity);
 }
 
 /**
@@ -120,6 +124,6 @@ size_t HashTable::getCapacity() const {
 * The size method returns how many key-value pairs are in the hash table. The
 * time complexity for this method must be O(1)
 */
-size_t HashTable::size() const {
-    return numElements;
+size_t HashTable::getSize() const {
+    return size;
 }
