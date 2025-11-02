@@ -16,18 +16,67 @@ HashTable::HashTable(size_t initCapacity) : capacity(initCapacity), size(0) {
     table.resize(capacity);
 }
 
+void HashTable::resize() {
+    std::vector<HashTableBucket> oldTable = table;
+    capacity *= 2;
+    table.clear();
+    table.resize(capacity);
+    size = 0;
+
+    for (HashTableBucket& bucket : oldTable) {
+        if (!bucket.isEmpty()) {
+            insert(bucket.getKey(), bucket.getValue());
+        }
+    }
+}
+
+int HashTable::hash(const std::string& key) const {
+    int sum = 0;
+    for (char c : key) sum += c;
+    return sum % capacity;
+}
+
+bool HashTable::isNormalKeyFound(const std::string& key, const size_t index) const {
+    return table[index].getKey() == key && !table[index].isEmpty();
+}
+
+/**
+* contains returns true if the key is in the table and false if the key is not in
+* the table.
+*/
+bool HashTable::contains(const std::string& key) const {
+    for (size_t i = 0; i < capacity; i++) {
+        if (isNormalKeyFound(key, i)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /**
  * Insert a new key-value pair into the table. Duplicate keys are NOT allowed. The
  * method should return true if the insertion was successful. If the insertion was
  * unsucessful, such as when a duplicate is attempted to be inserted, the method
  * should return false
  */
-bool HashTable::insert(std::string key, size_t value) {
-    if (contains(key)) return false; // throws exception if duplicate key
+bool HashTable::insert(const std::string& key, const int value) {
+    if (contains(key)) return false; // returns false if duplicate key
 
-    table.emplace_back(key, value); // inserts new key-value pair
+    if (alpha() >= 0.5) {
+        resize();
+    }
 
+    size_t index = hash(key);
+
+    // loops until empty bucket is found
+    while (!table[index].isEmpty()) {
+        index = (index + 1) % capacity; // move to the next bucket. When reaching the end, wrap around
+    }
+
+    table[index].load(key, value);
+    table[index].makeNormal();
     size++;
+
     return true;
 }
 
@@ -35,34 +84,17 @@ bool HashTable::insert(std::string key, size_t value) {
  * If the key is in the table, remove will “erase” the key-value pair from the
  * table. This might just be marking a bucket as empty-after-remove
  */
-bool HashTable::remove(std::string key) {
+bool HashTable::remove(const std::string& key) {
     if (!contains(key)) return false;
 
     for (size_t i = 0; i < capacity; i++) {
-        if (isNormalKeyFound(i, key)) {
+        if (isNormalKeyFound(key, i)) {
             table[i].makeEAR();
         }
     }
 
     size--;
     return true;
-}
-
- /**
- * contains returns true if the key is in the table and false if the key is not in
- * the table.
- */
-bool HashTable::contains(const std::string& key) const {
-    for (size_t i = 0; i < capacity; i++) {
-        if (isNormalKeyFound(i, key)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool HashTable::isNormalKeyFound(const size_t index, const std::string& key) const {
-    return table[index].getKey() == key && !table[index].isEmpty();
 }
 
 /**
@@ -76,7 +108,7 @@ bool HashTable::isNormalKeyFound(const size_t index, const std::string& key) con
  */
 std::optional<int> HashTable::get(const std::string& key) const {
     for (size_t i = 0; i < capacity; i++) {
-        if (isNormalKeyFound(i, key)) {
+        if (isNormalKeyFound(key, i)) {
             return table[i].getValue();
         }
     }
@@ -94,9 +126,9 @@ std::optional<int> HashTable::get(const std::string& key) const {
  * results in undefined behavior. Simply put, you do not need to address attempts
  * to access keys not in the table inside the bracket operator method.
  */
-int& HashTable::operator[](const std::string &key) {
+int& HashTable::operator[](const std::string& key) {
     for (size_t i = 0; i < capacity; i++) {
-        if (isNormalKeyFound(i, key)) {
+        if (isNormalKeyFound(key, i)) {
             return table[i].getValueRef();
         }
     }
