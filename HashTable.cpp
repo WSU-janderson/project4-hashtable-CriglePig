@@ -60,15 +60,15 @@ bool HashTable::contains(const std::string& key) const {
  * should return false
  */
 bool HashTable::insert(const std::string& key, const int value) {
-    if (contains(key)) return false; // returns false if duplicate key
+    if (contains(key)) return false; // return false if normal duplicate key
 
     if (alpha() >= 0.5) {
         resize();
     }
 
-    size_t index = hash(key);
+    size_t index = hash(key); // the key's home bucket index
 
-    // loops until empty bucket is found
+    // loop until empty bucket is found
     while (!table[index].isEmpty()) {
         index = (index + 1) % capacity; // move to the next bucket. When reaching the end, wrap around
     }
@@ -85,16 +85,19 @@ bool HashTable::insert(const std::string& key, const int value) {
  * table. This might just be marking a bucket as empty-after-remove
  */
 bool HashTable::remove(const std::string& key) {
-    if (!contains(key)) return false;
+    size_t index = hash(key);
 
-    for (size_t i = 0; i < capacity; i++) {
-        if (isNormalKeyFound(key, i)) {
-            table[i].makeEAR();
+    // probe through the table until the key or an ESS bucket is found
+    while (!table[index].isEmptySinceStart()) {
+        if (isNormalKeyFound(key, index)) {
+            table[index].makeEAR();
+            size--;
+            return true; // return true if the key is found and removed
         }
+        index = (index + 1) % capacity;
     }
 
-    size--;
-    return true;
+    return false; // return false if the loop reaches an ESS bucket
 }
 
 /**
@@ -107,11 +110,17 @@ bool HashTable::remove(const std::string& key) {
  * exception if the key is not found.
  */
 std::optional<int> HashTable::get(const std::string& key) const {
-    for (size_t i = 0; i < capacity; i++) {
-        if (isNormalKeyFound(key, i)) {
-            return table[i].getValue();
+    size_t index = hash(key);
+
+    // probe through the table until the key or an ESS bucket is found
+    while (!table[index].isEmptySinceStart()) {
+        if (isNormalKeyFound(key, index)) {
+            return table[index].getValue();
         }
+        index = (index + 1) % capacity;
     }
+
+    // return nullopt if no valid bucket is found
     return std::nullopt;
 }
 
@@ -127,12 +136,38 @@ std::optional<int> HashTable::get(const std::string& key) const {
  * to access keys not in the table inside the bracket operator method.
  */
 int& HashTable::operator[](const std::string& key) {
-    for (size_t i = 0; i < capacity; i++) {
-        if (isNormalKeyFound(key, i)) {
-            return table[i].getValueRef();
+    size_t index = hash(key);
+
+    // probe through the table until the key or an ESS bucket is found
+    while (!table[index].isEmptySinceStart()) {
+        if (isNormalKeyFound(key, index)) {
+            return table[index].getValueRef();
+        }
+        index = (index + 1) % capacity;
+    }
+
+    // throw exception if no valid bucket is found
+    throw std::exception();
+}
+
+std::ostream& operator<<(std::ostream& os, const HashTable& hashTable) {
+    os << "[";
+    bool isFirstBucket = true;
+
+    for (size_t i = 0; i < hashTable.getCapacity(); ++i) {
+        const auto& bucket = hashTable.table[i]; // get the bucket
+
+        if (!bucket.isEmpty()) { // only print NORMAL buckets
+            if (!isFirstBucket) {
+                os << "; ";
+            }
+            os << bucket;
+            isFirstBucket = false;
         }
     }
-    throw std::exception(); // throw exception if no valid key-pair found
+
+    os << "]";
+    return os;
 }
 
 /**

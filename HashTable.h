@@ -1,7 +1,10 @@
 /*
  * HashTable.h
  */
-
+#pragma once
+#include <vector>
+#include <optional>
+#include <string>
 #include "HashTableBucket.h"
 
 class HashTable {
@@ -23,17 +26,19 @@ class HashTable {
 
         bool remove(const std::string& key);
 
-        bool contains(const std::string& key) const;
+        [[nodiscard]] bool contains(const std::string& key) const;
 
-        std::optional<int> get(const std::string& key) const;
+        [[nodiscard]] std::optional<int> get(const std::string& key) const;
 
         int& operator[](const std::string& key);
 
-        std::vector<std::string> keys() const;
+        [[nodiscard]] std::vector<std::string> keys() const;
 
-        double alpha() const;
+        [[nodiscard]] double alpha() const;
 
-        size_t getCapacity() const;
+        [[nodiscard]] size_t getCapacity() const;
 
-        size_t getSize() const;
+        [[nodiscard]] size_t getSize() const;
+
+        friend std::ostream& operator<<(std::ostream& os, const HashTable& hashTable);
 };
