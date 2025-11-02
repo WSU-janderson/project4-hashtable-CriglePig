@@ -151,22 +151,12 @@ int& HashTable::operator[](const std::string& key) {
 }
 
 std::ostream& operator<<(std::ostream& os, const HashTable& hashTable) {
-    os << "[";
-    bool isFirstBucket = true;
-
     for (size_t i = 0; i < hashTable.getCapacity(); ++i) {
-        const auto& bucket = hashTable.table[i]; // get the bucket
-
+        const auto& bucket = hashTable.table[i];
         if (!bucket.isEmpty()) { // only print NORMAL buckets
-            if (!isFirstBucket) {
-                os << "; ";
-            }
-            os << bucket;
-            isFirstBucket = false;
+            os << "Bucket " << i << ": " << bucket << "\n";
         }
     }
-
-    os << "]";
     return os;
 }
 
