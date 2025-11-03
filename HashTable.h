@@ -9,8 +9,8 @@
 
 class HashTable {
     private:
-        size_t capacity; // the amount of spaces for buckets in the table
-        size_t size; // the amount of buckets in the table
+        size_t m_capacity; // the amount of spaces for buckets in the table
+        size_t m_size; // the amount of buckets in the table
         std::vector<HashTableBucket> table; // a vector that holds buckets
         std::vector<size_t> offsets; // pseudo-random probe offsets
 
@@ -23,7 +23,9 @@ class HashTable {
         [[nodiscard]] bool isNormalKeyFound(const std::string& key, size_t index) const;
 
     public:
-        HashTable(size_t initCapacity = 8); // default constructor
+        static constexpr size_t DEFAULT_INITIAL_CAPACITY = 8;
+
+        HashTable(size_t initCapacity = DEFAULT_INITIAL_CAPACITY); // default constructor
 
         bool insert(const std::string& key, int value);
 
@@ -37,9 +39,9 @@ class HashTable {
 
         [[nodiscard]] double alpha() const;
 
-        [[nodiscard]] size_t getCapacity() const;
+        [[nodiscard]] size_t capacity() const;
 
-        [[nodiscard]] size_t getSize() const;
+        [[nodiscard]] size_t size() const;
 
         int& operator[](const std::string& key);
 

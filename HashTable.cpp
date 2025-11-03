@@ -25,8 +25,8 @@
  *    Initializes table vector, sets size to 0, and generates initial offsets
  *    for pseudo-random probing.
  */
-HashTable::HashTable(const size_t initCapacity) : capacity(initCapacity), size(0) {
-    table.resize(capacity);
+HashTable::HashTable(const size_t initCapacity) : m_capacity(initCapacity), m_size(0) {
+    table.resize(m_capacity);
     generateOffsets();
 }
 
@@ -37,12 +37,12 @@ HashTable::HashTable(const size_t initCapacity) : capacity(initCapacity), size(0
  */
 void HashTable::resize() {
     std::vector<HashTableBucket> oldTable = table;
-    capacity *= 2;
+    m_capacity *= 2;
     table.clear();
-    table.resize(capacity);
-    size = 0;
+    table.resize(m_capacity);
+    m_size = 0;
 
-    generateOffsets(capacity); // deterministic shuffle for new table
+    generateOffsets(m_capacity); // deterministic shuffle for new table
 
     for (HashTableBucket& bucket : oldTable) {
         if (!bucket.isEmpty()) {
@@ -62,7 +62,7 @@ void HashTable::generateOffsets(const size_t seed) {
     offsets.clear();
 
     // Fill offsets vector with 1 ... (capacity - 1)
-    for (size_t i = 1; i < capacity; i++) {
+    for (size_t i = 1; i < m_capacity; i++) {
         offsets.push_back(i);
     }
 
@@ -86,7 +86,7 @@ void HashTable::generateOffsets(const size_t seed) {
 int HashTable::hash(const std::string& key) const {
     int sum = 0;
     for (char c : key) sum += c;
-    return sum % capacity;
+    return sum % m_capacity;
 }
 
 /* Purpose: Checks if a normal key exists at a given index.
@@ -110,7 +110,7 @@ bool HashTable::contains(const std::string& key) const {
     const size_t home = hash(key);
 
     for (size_t i = 0; i < offsets.size(); i++) {
-        const size_t index = (home + offsets[i]) % capacity;
+        const size_t index = (home + offsets[i]) % m_capacity;
 
         if (table[index].isEmptySinceStart()) {
             break; // stop when hitting an ESS
@@ -143,11 +143,11 @@ bool HashTable::insert(const std::string& key, const int value) {
 
     // pseudo-random probing
     for (size_t i = 0; i < offsets.size(); i++) {
-        const size_t index = (home + offsets[i]) % capacity;
+        const size_t index = (home + offsets[i]) % m_capacity;
         if (table[index].isEmpty()) {
             table[index].load(key, value);
             table[index].makeNormal();
-            size++;
+            m_size++;
             return true;
         }
     }
@@ -167,14 +167,14 @@ bool HashTable::remove(const std::string& key) {
     const size_t home = hash(key);
 
     for (size_t i = 0; i < offsets.size(); i++) {
-        const size_t index = (home + offsets[i]) % capacity;
+        const size_t index = (home + offsets[i]) % m_capacity;
 
         if (table[index].isEmptySinceStart()) {
             break;
         }
         if (isNormalKeyFound(key, index)) {
             table[index].makeEAR();
-            size--;
+            m_size--;
             return true;
         }
     }
@@ -192,7 +192,7 @@ std::optional<int> HashTable::get(const std::string& key) const {
     const size_t home = hash(key);
 
     for (size_t i = 0; i < offsets.size(); i++) {
-        const size_t index = (home + offsets[i]) % capacity;
+        const size_t index = (home + offsets[i]) % m_capacity;
 
         if (table[index].isEmptySinceStart()) {
             break;
@@ -213,7 +213,7 @@ std::optional<int> HashTable::get(const std::string& key) const {
 std::vector<std::string> HashTable::keys() const {
     std::vector<std::string> keys;
 
-    for (size_t i = 0; i < capacity; i++) {
+    for (size_t i = 0; i < m_capacity; i++) {
         if (!table[i].isEmpty()) {
             keys.push_back(table[i].getKey());
         }
@@ -227,23 +227,23 @@ std::vector<std::string> HashTable::keys() const {
  *    double – ratio of size to capacity
  */
 double HashTable::alpha() const {
-    return static_cast<double>(size) / static_cast<double>(capacity);
+    return static_cast<double>(m_size) / static_cast<double>(m_capacity);
 }
 
 /* Purpose: Returns total number of buckets in the table.
  * Returns:
  *    size_t – table capacity
  */
-size_t HashTable::getCapacity() const {
-    return capacity;
+size_t HashTable::capacity() const {
+    return m_capacity;
 }
 
 /* Purpose: Returns number of key-value pairs in the table.
  * Returns:
  *    size_t – number of entries
  */
-size_t HashTable::getSize() const {
-    return size;
+size_t HashTable::size() const {
+    return m_size;
 }
 
 /* Purpose: Accesses value by key using bracket notation.
@@ -258,7 +258,7 @@ int& HashTable::operator[](const std::string& key) {
     size_t home = hash(key);
 
     for (size_t i = 0; i < offsets.size(); i++) {
-        const size_t index = (home + offsets[i]) % capacity;
+        const size_t index = (home + offsets[i]) % m_capacity;
 
         if (table[index].isEmptySinceStart()) {
             break;
@@ -289,7 +289,7 @@ std::ostream& operator<<(std::ostream& os, const HashTable& table) {
 std::string HashTable::printMe() const {
     std::ostringstream out;
 
-    for (size_t i = 0; i < capacity; i++) {
+    for (size_t i = 0; i < m_capacity; i++) {
         const HashTableBucket bucket = table[i];
 
         if (!bucket.isEmpty()) {
