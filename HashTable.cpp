@@ -1,5 +1,12 @@
-/*
- * HashTable.cpp
+/* Filename: HashTable.cpp
+ * Author: Crystal Daniel
+ * Project: Project 4 - Hash Table
+ * Due Date: 11/03/2025
+ * Program Description: This program implements a hash table using open addressing
+ * with pseudo-random probing for collision resolution. It supports operations
+ * such as insertion, deletion, lookup, dynamic resizing, and retrieval of all keys.
+ * It also provides a bracket operator for reference-based access and a formatted
+ * print method.
  */
 
 #include <algorithm>
@@ -11,15 +18,23 @@
 #include <vector>
 #include "HashTable.h"
 
-/*
- * Only a single constructor that takes an initial capacity for the table is
- * necessary. If no capacity is given, it defaults to 8 initially
+/* Purpose: Constructs a hash table with initial capacity.
+ * Parameters:
+ *    initCapacity – number of buckets to initially create (defaults to 8)
+ * Behavior:
+ *    Initializes table vector, sets size to 0, and generates initial offsets
+ *    for pseudo-random probing.
  */
 HashTable::HashTable(const size_t initCapacity) : capacity(initCapacity), size(0) {
     table.resize(capacity);
     generateOffsets();
 }
 
+/* Purpose: Resizes the hash table when load factor exceeds threshold.
+ * Behavior:
+ *    Doubles the table capacity, rehashes all existing key-value pairs,
+ *    and regenerates offsets.
+ */
 void HashTable::resize() {
     std::vector<HashTableBucket> oldTable = table;
     capacity *= 2;
@@ -36,6 +51,13 @@ void HashTable::resize() {
     }
 }
 
+/* Purpose: Generates offsets for pseudo-random probing.
+ * Parameters:
+ *    seed – optional seed for deterministic shuffle (default 0)
+ * Behavior:
+ *    Fills offsets vector with 1..capacity-1 and shuffles deterministically
+ *    if a seed is provided.
+ */
 void HashTable::generateOffsets(const size_t seed) {
     offsets.clear();
 
@@ -55,20 +77,35 @@ void HashTable::generateOffsets(const size_t seed) {
     }
 }
 
+/* Purpose: Computes a hash value for a given key.
+ * Parameters:
+ *    key – string key to hash
+ * Returns:
+ *    int – hash index within table capacity
+ */
 int HashTable::hash(const std::string& key) const {
     int sum = 0;
     for (char c : key) sum += c;
     return sum % capacity;
 }
 
+/* Purpose: Checks if a normal key exists at a given index.
+ * Parameters:
+ *    key – string key to check
+ *    index – bucket index to examine
+ * Returns:
+ *    true if key exists and is not marked empty
+ */
 bool HashTable::isNormalKeyFound(const std::string& key, const size_t index) const {
     return table[index].getKey() == key && !table[index].isEmpty();
 }
 
-/**
-* contains returns true if the key is in the table and false if the key is not in
-* the table.
-*/
+/* Purpose: Checks whether the table contains a key.
+ * Parameters:
+ *    key – string key to search
+ * Returns:
+ *    true if key exists, false otherwise
+ */
 bool HashTable::contains(const std::string& key) const {
     const size_t home = hash(key);
 
@@ -86,11 +123,15 @@ bool HashTable::contains(const std::string& key) const {
     return false;
 }
 
-/**
- * Insert a new key-value pair into the table. Duplicate keys are NOT allowed. The
- * method should return true if the insertion was successful. If the insertion was
- * unsucessful, such as when a duplicate is attempted to be inserted, the method
- * should return false
+/* Purpose: Inserts a key-value pair into the hash table.
+ * Parameters:
+ *    key – string key to insert
+ *    value – integer value to associate with key
+ * Returns:
+ *    true if insertion succeeded, false if key already exists
+ * Behavior:
+ *    Resizes the table if load factor >= 0.5. Uses pseudo-random probing
+ *    to find an empty bucket for insertion.
  */
 bool HashTable::insert(const std::string& key, const int value) {
     if (contains(key)) return false;
@@ -114,9 +155,13 @@ bool HashTable::insert(const std::string& key, const int value) {
     return false;
 }
 
- /**
- * If the key is in the table, remove will “erase” the key-value pair from the
- * table. This might just be marking a bucket as empty-after-remove
+/* Purpose: Removes a key-value pair from the table.
+ * Parameters:
+ *    key – string key to remove
+ * Returns:
+ *    true if removal succeeded, false if key not found
+ * Behavior:
+ *    Marks bucket as empty-after-remove without altering other buckets.
  */
 bool HashTable::remove(const std::string& key) {
     const size_t home = hash(key);
@@ -137,14 +182,11 @@ bool HashTable::remove(const std::string& key) {
     return false;
 }
 
-/**
- * If the key is found in the table, find will return the value associated with
- * that key. If the key is not in the table, find will return something called
- * nullopt, which is a special value in C++. The find method returns an
- * optional<int>, which is a way to denote a method might not have a valid value
- * to return. This approach is nicer than designating a special value, like -1, to
- * signify the return value is invalid. It's also much better than throwing an
- * exception if the key is not found.
+/* Purpose: Retrieves the value associated with a key.
+ * Parameters:
+ *    key – string key to lookup
+ * Returns:
+ *    optional<int> containing value if key exists, nullopt otherwise
  */
 std::optional<int> HashTable::get(const std::string& key) const {
     const size_t home = hash(key);
@@ -164,11 +206,10 @@ std::optional<int> HashTable::get(const std::string& key) const {
 }
 
 
-/**
-* keys returns a std::vector (C++ version of ArrayList, or simply list/array)
-* with all of the keys currently in the table. The length of the vector should be
-* the same as the size of the hash table.
-*/
+/* Purpose: Returns all keys currently in the hash table.
+ * Returns:
+ *    vector<string> containing all active keys
+ */
 std::vector<std::string> HashTable::keys() const {
     std::vector<std::string> keys;
 
@@ -181,45 +222,37 @@ std::vector<std::string> HashTable::keys() const {
     return keys;
 }
 
-/**
-* alpha returns the current load factor of the table, or size/capacity. Since
-* alpha returns a double,make sure to properly cast the size and capacity, which
-* are size_t, to avoid integer division. You can cast a size_t num to a double in
-* C++ like:
-                 static_cast<double>(num)
-The time complexity for
-* this method must be O(1).
-*/
+/* Purpose: Returns current load factor of the table.
+ * Returns:
+ *    double – ratio of size to capacity
+ */
 double HashTable::alpha() const {
     return static_cast<double>(size) / static_cast<double>(capacity);
 }
 
-/**
-* capacity returns how many buckets in total are in the hash table. The time
-* complexity for this algorithm must be O(1).
-*/
+/* Purpose: Returns total number of buckets in the table.
+ * Returns:
+ *    size_t – table capacity
+ */
 size_t HashTable::getCapacity() const {
     return capacity;
 }
 
-/**
-* The size method returns how many key-value pairs are in the hash table. The
-* time complexity for this method must be O(1)
-*/
+/* Purpose: Returns number of key-value pairs in the table.
+ * Returns:
+ *    size_t – number of entries
+ */
 size_t HashTable::getSize() const {
     return size;
 }
 
-/**
- * The bracket operator lets us access values in the map using a familiar syntax,
- * similar to C++ std::map or Python dictionaries. It behaves like get, returning
- * the value associated with a given key: int idNum = hashTable[“James”];
- * Unlike get, however, the bracket operator returns a reference to the value,
- * which allows assignment: hashTable[“James”] = 1234;
- * If the key is not in the table, returning a valid reference is impossible. You may choose to
- * throw an exception in this case, but for our implementation, the situation
- * results in undefined behavior. Simply put, you do not need to address attempts
- * to access keys not in the table inside the bracket operator method.
+/* Purpose: Accesses value by key using bracket notation.
+ * Parameters:
+ *    key – string key to access
+ * Returns:
+ *    reference to the value associated with the key
+ * Throws:
+ *    exception if key does not exist
  */
 int& HashTable::operator[](const std::string& key) {
     size_t home = hash(key);
@@ -238,12 +271,21 @@ int& HashTable::operator[](const std::string& key) {
     throw std::exception();
 }
 
-
+/* Purpose: Prints the hash table to an output stream.
+ * Parameters:
+ *    os – output stream (e.g., cout)
+ * Behavior:
+ *    Prints all non-empty buckets in formatted form.
+ */
 std::ostream& operator<<(std::ostream& os, const HashTable& table) {
     os << table.printMe();
     return os;
 }
 
+/* Purpose: Returns a string representation of the hash table.
+ * Returns:
+ *    string – formatted output of all non-empty buckets
+ */
 std::string HashTable::printMe() const {
     std::ostringstream out;
 
