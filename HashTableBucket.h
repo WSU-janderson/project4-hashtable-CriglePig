@@ -16,7 +16,7 @@ class HashTableBucket {
         HashTableBucket();  // ESS by default
         HashTableBucket(std::string key, int value);
 
-        void load(std::string key, int value);
+        void load(std::string newKey, int newValue);
 
         void makeESS();
         void makeNormal();

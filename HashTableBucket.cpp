@@ -40,9 +40,9 @@ HashTableBucket::HashTableBucket(std::string key, const int value) {
  * Behavior:
  *    Updates the bucket's key and value, then marks it as NORMAL.
  */
-void HashTableBucket::load(std::string key, int value) {
-    this->key = std::move(key);
-    this->value = value;
+void HashTableBucket::load(std::string newKey, const int newValue) {
+    key = std::move(newKey);
+    value = newValue;
     makeNormal();
 }
 
