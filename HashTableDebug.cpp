@@ -26,6 +26,10 @@ int main() {
     hashTable.remove("Dog");
     hashTable.remove("Bear");
     hashTable.remove("Ostrich");
+    hashTable.remove("Cat");
+    hashTable.remove("Lizard");
+    hashTable.remove("Komodo Dragon");
+    hashTable.remove("Worm");
 
     std::cout << hashTable << std::endl;
 

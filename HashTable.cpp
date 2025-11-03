@@ -2,19 +2,22 @@
  * HashTable.cpp
  */
 
+#include <algorithm>
 #include <cstdlib>
 #include <iostream>
 #include <optional>
-#include <vector>
+#include <random>
 #include <sstream>
+#include <vector>
 #include "HashTable.h"
 
 /*
  * Only a single constructor that takes an initial capacity for the table is
  * necessary. If no capacity is given, it defaults to 8 initially
  */
-HashTable::HashTable(size_t initCapacity) : capacity(initCapacity), size(0) {
+HashTable::HashTable(const size_t initCapacity) : capacity(initCapacity), size(0) {
     table.resize(capacity);
+    generateOffsets();
 }
 
 void HashTable::resize() {
@@ -24,9 +27,30 @@ void HashTable::resize() {
     table.resize(capacity);
     size = 0;
 
+    generateOffsets(capacity); // deterministic shuffle for new table
+
     for (HashTableBucket& bucket : oldTable) {
         if (!bucket.isEmpty()) {
             insert(bucket.getKey(), bucket.getValue());
+        }
+    }
+}
+
+void HashTable::generateOffsets(const size_t seed) {
+    offsets.clear();
+
+    // Fill offsets vector with 1 ... (capacity - 1)
+    for (size_t i = 1; i < capacity; i++) {
+        offsets.push_back(i);
+    }
+
+    // deterministic shuffle if a seed is given
+    if (seed > 0) {
+        srand(seed); // pseudo-random seed for reproducibility
+
+        for (size_t i = 0; i < offsets.size(); i++) {
+            size_t j = rand() % offsets.size();
+            std::swap(offsets[i], offsets[j]);
         }
     }
 }
@@ -46,14 +70,17 @@ bool HashTable::isNormalKeyFound(const std::string& key, const size_t index) con
 * the table.
 */
 bool HashTable::contains(const std::string& key) const {
-    size_t index = hash(key);
+    const size_t home = hash(key);
 
-    // probe through the table until the key or an ESS bucket is found
-    while (!table[index].isEmptySinceStart()) {
-        if (isNormalKeyFound(key, index)) {
-            return true; // return true if the key is found
+    for (size_t i = 0; i < offsets.size(); i++) {
+        const size_t index = (home + offsets[i]) % capacity;
+
+        if (table[index].isEmptySinceStart()) {
+            break; // stop when hitting an ESS
         }
-        index = (index + 1) % capacity;
+        if (isNormalKeyFound(key, index)) {
+            return true; // key found
+        }
     }
 
     return false;
@@ -66,24 +93,25 @@ bool HashTable::contains(const std::string& key) const {
  * should return false
  */
 bool HashTable::insert(const std::string& key, const int value) {
-    if (contains(key)) return false; // return false if normal duplicate key
+    if (contains(key)) return false;
+    if (alpha() >= 0.5) resize();
 
-    if (alpha() >= 0.5) {
-        resize();
+    // seed with key length
+    generateOffsets(key.length());
+    const size_t home = hash(key);
+
+    // pseudo-random probing
+    for (size_t i = 0; i < offsets.size(); i++) {
+        const size_t index = (home + offsets[i]) % capacity;
+        if (table[index].isEmpty()) {
+            table[index].load(key, value);
+            table[index].makeNormal();
+            size++;
+            return true;
+        }
     }
 
-    size_t index = hash(key); // the key's home bucket index
-
-    // loop until empty bucket is found
-    while (!table[index].isEmpty()) {
-        index = (index + 1) % capacity; // move to the next bucket. When reaching the end, wrap around
-    }
-
-    table[index].load(key, value);
-    table[index].makeNormal();
-    size++;
-
-    return true;
+    return false;
 }
 
  /**
@@ -91,19 +119,22 @@ bool HashTable::insert(const std::string& key, const int value) {
  * table. This might just be marking a bucket as empty-after-remove
  */
 bool HashTable::remove(const std::string& key) {
-    size_t index = hash(key);
+    const size_t home = hash(key);
 
-    // probe through the table until the key or an ESS bucket is found
-    while (!table[index].isEmptySinceStart()) {
+    for (size_t i = 0; i < offsets.size(); i++) {
+        const size_t index = (home + offsets[i]) % capacity;
+
+        if (table[index].isEmptySinceStart()) {
+            break;
+        }
         if (isNormalKeyFound(key, index)) {
             table[index].makeEAR();
             size--;
-            return true; // return true if the key is found and removed
+            return true;
         }
-        index = (index + 1) % capacity;
     }
 
-    return false; // return false if the loop reaches an ESS bucket
+    return false;
 }
 
 /**
@@ -116,19 +147,22 @@ bool HashTable::remove(const std::string& key) {
  * exception if the key is not found.
  */
 std::optional<int> HashTable::get(const std::string& key) const {
-    size_t index = hash(key);
+    const size_t home = hash(key);
 
-    // probe through the table until the key or an ESS bucket is found
-    while (!table[index].isEmptySinceStart()) {
+    for (size_t i = 0; i < offsets.size(); i++) {
+        const size_t index = (home + offsets[i]) % capacity;
+
+        if (table[index].isEmptySinceStart()) {
+            break;
+        }
         if (isNormalKeyFound(key, index)) {
             return table[index].getValue();
         }
-        index = (index + 1) % capacity;
     }
 
-    // return nullopt if no valid bucket is found
     return std::nullopt;
 }
+
 
 /**
 * keys returns a std::vector (C++ version of ArrayList, or simply list/array)
@@ -143,6 +177,7 @@ std::vector<std::string> HashTable::keys() const {
             keys.push_back(table[i].getKey());
         }
     }
+
     return keys;
 }
 
@@ -187,19 +222,22 @@ size_t HashTable::getSize() const {
  * to access keys not in the table inside the bracket operator method.
  */
 int& HashTable::operator[](const std::string& key) {
-    size_t index = hash(key);
+    size_t home = hash(key);
 
-    // probe through the table until the key or an ESS bucket is found
-    while (!table[index].isEmptySinceStart()) {
+    for (size_t i = 0; i < offsets.size(); i++) {
+        const size_t index = (home + offsets[i]) % capacity;
+
+        if (table[index].isEmptySinceStart()) {
+            break;
+        }
         if (isNormalKeyFound(key, index)) {
             return table[index].getValueRef();
         }
-        index = (index + 1) % capacity;
     }
 
-    // throw exception if no valid bucket is found
     throw std::exception();
 }
+
 
 std::ostream& operator<<(std::ostream& os, const HashTable& table) {
     os << table.printMe();
@@ -209,7 +247,7 @@ std::ostream& operator<<(std::ostream& os, const HashTable& table) {
 std::string HashTable::printMe() const {
     std::ostringstream out;
 
-    for (size_t i = 0; i < capacity; ++i) {
+    for (size_t i = 0; i < capacity; i++) {
         const HashTableBucket bucket = table[i];
 
         if (!bucket.isEmpty()) {

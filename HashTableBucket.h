@@ -1,16 +1,16 @@
 /*
  * HashTableBucket.h
  */
-
+#pragma once
 #include <string>
 
 enum class BucketType {NORMAL, ESS, EAR};
 
 class HashTableBucket {
     private:
-        std::string key;
-        int value;
-        BucketType type;
+        std::string key = "SENTINEL_KEY_42"; // sentinel for ESS buckets
+        int value = 0;
+        BucketType type = BucketType::ESS;
 
     public:
         HashTableBucket();  // ESS by default
@@ -22,14 +22,14 @@ class HashTableBucket {
         void makeNormal();
         void makeEAR();
 
-        std::string getKey() const;
-        int getValue() const;
+        [[nodiscard]] std::string getKey() const;
+        [[nodiscard]] int getValue() const;
         int& getValueRef();
         void setValue(int newValue);
 
-        bool isEmpty() const;
-        bool isEmptySinceStart() const;
-        bool isEmptyAfterRemove() const;
+        [[nodiscard]] bool isEmpty() const;
+        [[nodiscard]] bool isEmptySinceStart() const;
+        [[nodiscard]] bool isEmptyAfterRemove() const;
 
         friend std::ostream& operator<<(std::ostream& os, const HashTableBucket& bucket);
 };

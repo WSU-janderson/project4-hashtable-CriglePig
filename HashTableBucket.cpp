@@ -19,7 +19,7 @@ HashTableBucket::HashTableBucket() {
 * A parameterized constructor could initialize the key and value, as
 * well as set the bucket type to NORMAL.
 */
-HashTableBucket::HashTableBucket(std::string key, int value) {
+HashTableBucket::HashTableBucket(std::string key, const int value) {
     load(std::move(key), value);
 }
 

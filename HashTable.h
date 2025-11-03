@@ -12,8 +12,11 @@ class HashTable {
         size_t capacity; // the amount of spaces for buckets in the table
         size_t size; // the amount of buckets in the table
         std::vector<HashTableBucket> table; // a vector that holds buckets
+        std::vector<size_t> offsets; // pseudo-random probe offsets
 
         void resize();
+
+        void generateOffsets(size_t seed = 0);
 
         [[nodiscard]] int hash(const std::string& key) const;
 
@@ -42,5 +45,5 @@ class HashTable {
 
         friend std::ostream& operator<<(std::ostream& os, const HashTable& hashTable);
 
-        std::string printMe() const;
+        [[nodiscard]] std::string printMe() const;
 };
