@@ -15,9 +15,9 @@ class HashTable {
 
         void resize();
 
-        int hash(const std::string& key) const;
+        [[nodiscard]] int hash(const std::string& key) const;
 
-        bool isNormalKeyFound(const std::string& key, size_t index) const;
+        [[nodiscard]] bool isNormalKeyFound(const std::string& key, size_t index) const;
 
     public:
         HashTable(size_t initCapacity = 8); // default constructor
@@ -30,8 +30,6 @@ class HashTable {
 
         [[nodiscard]] std::optional<int> get(const std::string& key) const;
 
-        int& operator[](const std::string& key);
-
         [[nodiscard]] std::vector<std::string> keys() const;
 
         [[nodiscard]] double alpha() const;
@@ -40,5 +38,9 @@ class HashTable {
 
         [[nodiscard]] size_t getSize() const;
 
+        int& operator[](const std::string& key);
+
         friend std::ostream& operator<<(std::ostream& os, const HashTable& hashTable);
+
+        std::string printMe() const;
 };

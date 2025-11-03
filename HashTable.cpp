@@ -6,6 +6,7 @@
 #include <iostream>
 #include <optional>
 #include <vector>
+#include <sstream>
 #include "HashTable.h"
 
 /*
@@ -45,11 +46,16 @@ bool HashTable::isNormalKeyFound(const std::string& key, const size_t index) con
 * the table.
 */
 bool HashTable::contains(const std::string& key) const {
-    for (size_t i = 0; i < capacity; i++) {
-        if (isNormalKeyFound(key, i)) {
-            return true;
+    size_t index = hash(key);
+
+    // probe through the table until the key or an ESS bucket is found
+    while (!table[index].isEmptySinceStart()) {
+        if (isNormalKeyFound(key, index)) {
+            return true; // return true if the key is found
         }
+        index = (index + 1) % capacity;
     }
+
     return false;
 }
 
@@ -125,42 +131,6 @@ std::optional<int> HashTable::get(const std::string& key) const {
 }
 
 /**
- * The bracket operator lets us access values in the map using a familiar syntax,
- * similar to C++ std::map or Python dictionaries. It behaves like get, returning
- * the value associated with a given key: int idNum = hashTable[“James”];
- * Unlike get, however, the bracket operator returns a reference to the value,
- * which allows assignment: hashTable[“James”] = 1234;
- * If the key is not in the table, returning a valid reference is impossible. You may choose to
- * throw an exception in this case, but for our implementation, the situation
- * results in undefined behavior. Simply put, you do not need to address attempts
- * to access keys not in the table inside the bracket operator method.
- */
-int& HashTable::operator[](const std::string& key) {
-    size_t index = hash(key);
-
-    // probe through the table until the key or an ESS bucket is found
-    while (!table[index].isEmptySinceStart()) {
-        if (isNormalKeyFound(key, index)) {
-            return table[index].getValueRef();
-        }
-        index = (index + 1) % capacity;
-    }
-
-    // throw exception if no valid bucket is found
-    throw std::exception();
-}
-
-std::ostream& operator<<(std::ostream& os, const HashTable& hashTable) {
-    for (size_t i = 0; i < hashTable.getCapacity(); ++i) {
-        const auto& bucket = hashTable.table[i];
-        if (!bucket.isEmpty()) { // only print NORMAL buckets
-            os << "Bucket " << i << ": " << bucket << "\n";
-        }
-    }
-    return os;
-}
-
-/**
 * keys returns a std::vector (C++ version of ArrayList, or simply list/array)
 * with all of the keys currently in the table. The length of the vector should be
 * the same as the size of the hash table.
@@ -203,4 +173,49 @@ size_t HashTable::getCapacity() const {
 */
 size_t HashTable::getSize() const {
     return size;
+}
+
+/**
+ * The bracket operator lets us access values in the map using a familiar syntax,
+ * similar to C++ std::map or Python dictionaries. It behaves like get, returning
+ * the value associated with a given key: int idNum = hashTable[“James”];
+ * Unlike get, however, the bracket operator returns a reference to the value,
+ * which allows assignment: hashTable[“James”] = 1234;
+ * If the key is not in the table, returning a valid reference is impossible. You may choose to
+ * throw an exception in this case, but for our implementation, the situation
+ * results in undefined behavior. Simply put, you do not need to address attempts
+ * to access keys not in the table inside the bracket operator method.
+ */
+int& HashTable::operator[](const std::string& key) {
+    size_t index = hash(key);
+
+    // probe through the table until the key or an ESS bucket is found
+    while (!table[index].isEmptySinceStart()) {
+        if (isNormalKeyFound(key, index)) {
+            return table[index].getValueRef();
+        }
+        index = (index + 1) % capacity;
+    }
+
+    // throw exception if no valid bucket is found
+    throw std::exception();
+}
+
+std::ostream& operator<<(std::ostream& os, const HashTable& table) {
+    os << table.printMe();
+    return os;
+}
+
+std::string HashTable::printMe() const {
+    std::ostringstream out;
+
+    for (size_t i = 0; i < capacity; ++i) {
+        const HashTableBucket bucket = table[i];
+
+        if (!bucket.isEmpty()) {
+            out << "Bucket " << i << ": " << bucket << "\n";
+        }
+    }
+
+    return out.str();
 }
