@@ -32,4 +32,3 @@ bucket. Average-case time is **O(1)**, but in the worst case it may need to chec
 The bracket operator `operator[]()` also probes for the key using pseudo-random offsets and returns a reference to the
 value. Average-case time is **O(1)**, but worst-case time is **O(n)** if the key is at the end of the probe sequence
 or not present.
----
